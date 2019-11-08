@@ -4,11 +4,32 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 const app = express()
+const Firestore = require('@google-cloud/firestore');
+
+const db = new Firestore();
+
+const error = '{ "error" : "500", "message": "Something went wrong" }'
 
 var latestReading = ""
 
+
 app.get('/readings', (req, res) => {
   res.json(latestReading);
+});
+
+app.get('/test', (req, res) => {
+  let response = []
+  db.collection('readings').get()
+  .then((snapshot) => {
+    snapshot.forEach((doc) => {
+      response.push(doc.data());
+    });
+    res.json(response);
+  })
+  .catch((err) => {
+    console.log('Error getting documents', err);
+    res.json(error)
+  });
 });
 
 app.post('/readings', jsonParser, (req, res) => {
