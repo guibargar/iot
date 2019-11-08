@@ -4,12 +4,10 @@ const express = require('express');
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 const app = express()
+
 const Firestore = require('@google-cloud/firestore');
-
 const db = new Firestore();
-
 const error = '{ "error" : "500", "message": "Something went wrong" }'
-
 var latestReading = ""
 
 
@@ -28,12 +26,16 @@ app.get('/test', (req, res) => {
   })
   .catch((err) => {
     console.log('Error getting documents', err);
-    res.json(error)
+    res.status(500).json(error)
   });
 });
 
 app.post('/readings', jsonParser, (req, res) => {
   latestReading = req.body
+  let timestamp = (typeof req.body.timestamp != "undefined") ? req.body.timestamp : new Date().toISOString()
+  let todaysReadingsRef = db.collection('readings').doc(timestamp);
+  let setTodaysReadings = todaysReadingsRef.set(req.body);
+
   console.log("Body"+latestReading);
   res.status(200).send()
 });
