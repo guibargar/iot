@@ -17,7 +17,9 @@ app.get('/readings', (req, res) => {
 
 app.get('/test', (req, res) => {
   let response = []
-  db.collection('readings').get()
+  db.collection('readings')
+  .where('timestamp', '>', '2010-11-10')
+  .where('timestamp', '<', '2010-11-11').get()
   .then((snapshot) => {
     snapshot.forEach((doc) => {
       response.push(doc.data());
