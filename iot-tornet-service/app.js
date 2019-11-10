@@ -5,8 +5,7 @@ const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 const app = express()
 
-const Firestore = require('@google-cloud/firestore');
-const db = new Firestore();
+const db = require('./db')
 const error = '{ "error" : "500", "message": "Something went wrong" }'
 var latestReading = ""
 
@@ -15,33 +14,16 @@ app.get('/readings', (req, res) => {
   res.json(latestReading);
 });
 
-app.get('/test', (req, res) => {
-  let response = []
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  db.collection('readings')
-  .where('timestamp', '>', today.toISOString().slice(0,10))
-  .where('timestamp', '<', tomorrow.toISOString().slice(0,10)).get()
-  .then((snapshot) => {
-    snapshot.forEach((doc) => {
-      response.push(doc.data());
-    });
-    res.json(response);
-  })
-  .catch((err) => {
-    console.log('Error getting documents', err);
-    res.status(500).json(error)
-  });
+app.get('/readings/today', (req, res) => {
+  db.readingsToday()
+  .then( (todaysReadings) => {
+    console.log(`Today's readings: ${todaysReadings}`)
+    res.json(todaysReadings)
+  })  
 });
 
 app.post('/readings', jsonParser, (req, res) => {
-  latestReading = req.body
-  let timestamp = (typeof req.body.timestamp != "undefined") ? req.body.timestamp : new Date().toISOString()
-  let todaysReadingsRef = db.collection('readings').doc(timestamp);
-  let setTodaysReadings = todaysReadingsRef.set(req.body);
-
-  console.log("Body"+latestReading);
+  db.addReading(req.body)
   res.status(200).send()
 });
 
